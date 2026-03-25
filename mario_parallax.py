@@ -94,6 +94,28 @@ class SpriteLoader:
             surf = pygame.transform.scale(surf, (w * scale, h * scale))
         return surf
 
+    def _make_qblock(self, r, g, b):
+        """Pre-rend un bloc ? style Mario avec un fond colore."""
+        s = pygame.Surface((TILE, TILE))
+        s.fill((r, g, b))
+        # Bordure 3D
+        pygame.draw.line(s, (min(255, r + 50), min(255, g + 50), min(255, b + 50)),
+                         (1, 1), (TILE - 2, 1))
+        pygame.draw.line(s, (min(255, r + 50), min(255, g + 50), min(255, b + 50)),
+                         (1, 1), (1, TILE - 2))
+        pygame.draw.line(s, (max(0, r - 80), max(0, g - 80), 0),
+                         (1, TILE - 1), (TILE - 1, TILE - 1))
+        pygame.draw.line(s, (max(0, r - 80), max(0, g - 80), 0),
+                         (TILE - 1, 1), (TILE - 1, TILE - 1))
+        pygame.draw.rect(s, (max(0, r - 50), max(0, g - 50), 0), (0, 0, TILE, TILE), 1)
+        # "?"
+        font = pygame.font.SysFont("arial", 20, bold=True)
+        txt = font.render("?", True, WHITE)
+        shadow = font.render("?", True, (max(0, r - 80), max(0, g - 80), 0))
+        s.blit(shadow, shadow.get_rect(center=(TILE // 2 + 1, TILE // 2 + 1)))
+        s.blit(txt, txt.get_rect(center=(TILE // 2, TILE // 2)))
+        return s
+
     def extract_tile(self, tx, ty, scale=2):
         """Extrait une tile 16x16 par index de grille."""
         return self.extract(self.tiles_sheet, tx * 16 + tx, ty * 16 + ty,
@@ -185,15 +207,15 @@ class SpriteLoader:
         tiles["bricks"] = self.extract_tile(1, 0)
         # Bloc vide (apres utilisation)
         tiles["empty"] = self.extract_tile(27, 0)
-        # Bloc ? frames
-        tiles["qblock1"] = self.extract_tile(24, 0)
-        tiles["qblock2"] = self.extract_tile(25, 0)
-        tiles["qblock3"] = self.extract_tile(26, 0)
-        # Tuyau
+        # Bloc ? - pre-rendu propre (les tiles NES sont trop sombres)
+        tiles["qblock1"] = self._make_qblock(220, 170, 0)
+        tiles["qblock2"] = self._make_qblock(200, 150, 0)
+        tiles["qblock3"] = self._make_qblock(180, 130, 0)
+        # Tuyau - tete (0,10)/(1,10), corps (0,9)/(1,9) qui sont verts
         tiles["pipeL"] = self.extract_tile(0, 10)
         tiles["pipeR"] = self.extract_tile(1, 10)
-        tiles["pipe2L"] = self.extract_tile(0, 11)
-        tiles["pipe2R"] = self.extract_tile(1, 11)
+        tiles["pipe2L"] = self.extract_tile(0, 9)
+        tiles["pipe2R"] = self.extract_tile(1, 9)
         # Nuages
         for i, name in enumerate(["cloud1_1", "cloud1_2", "cloud1_3"]):
             tiles[name] = self.extract_tile(i, 20)
@@ -700,7 +722,7 @@ class QuestionBlock:
             if self.used:
                 screen.blit(ts["empty"], (sx, sy))
             else:
-                idx = (self.frame // 10) % 3
+                idx = (self.frame // 30) % 3
                 keys = ["qblock1", "qblock2", "qblock3"]
                 screen.blit(ts[keys[idx]], (sx, sy))
         else:
