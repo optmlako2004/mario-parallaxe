@@ -132,6 +132,40 @@ class SpriteLoader:
 
         return sprites
 
+    def get_fire_mario_sprites(self):
+        """Extrait les sprites Fire Mario (palette blanc/rouge) depuis characters.gif."""
+        s = self.characters
+        sprites = {}
+
+        # Fire Mario petit (16x16) - meme layout que small normal mais y decale
+        # Fire palette commence a y=168 pour petit (blanc+rouge)
+        fire_small = [
+            ("idle", 276, 168),
+            ("run1", 290, 168),
+            ("run2", 304, 168),
+            ("run3", 321, 168),
+            ("jump", 355, 168),
+        ]
+        for name, x, y in fire_small:
+            img = self.extract(s, x, y, 16, 16, 2, -1)
+            sprites[f"small_R_{name}"] = img
+            sprites[f"small_L_{name}"] = pygame.transform.flip(img, True, False)
+
+        # Fire Mario grand (16x32) - y=125
+        fire_big = [
+            ("idle", 259, 125),
+            ("run1", 276, 125),
+            ("run2", 296, 125),
+            ("run3", 315, 125),
+            ("jump", 369, 125),
+        ]
+        for name, x, y in fire_big:
+            img = self.extract(s, x, y, 16, 32, 2, -1)
+            sprites[f"big_R_{name}"] = img
+            sprites[f"big_L_{name}"] = pygame.transform.flip(img, True, False)
+
+        return sprites
+
     def get_goomba_sprites(self):
         s = self.characters
         sprites = {}
@@ -834,9 +868,14 @@ class Player:
             if self.vy < JUMP_CUT:
                 self.vy = JUMP_CUT
 
-        self.vy += GRAVITY * dt
-        if self.vy > MAX_FALL:
-            self.vy = MAX_FALL
+        # Gravite seulement si pas au sol (evite la vibration)
+        if not self.on_ground:
+            self.vy += GRAVITY * dt
+            if self.vy > MAX_FALL:
+                self.vy = MAX_FALL
+        else:
+            # Petite force vers le bas pour coller au sol
+            self.vy = 1
 
         brick_rects = [b.rect for b in bricks if b.alive]
         qb_rects = [qb.rect for qb in q_blocks]
@@ -1177,15 +1216,18 @@ class Game:
         self.mario_sprites = self.loader.get_mario_sprites() if self.loader.loaded else {}
         self.goomba_sprites = self.loader.get_goomba_sprites() if self.loader.loaded else None
 
-        # Sprites Fire Mario (codes)
-        self.fire_sprites = {}
-        for right in [True, False]:
-            d = "R" if right else "L"
-            for f, name in enumerate(["idle", "run1", "run2", "run3"]):
-                self.fire_sprites[f"big_{d}_{name}"] = create_fire_mario_big(right, f % 2)
-                self.fire_sprites[f"small_{d}_{name}"] = create_fire_mario_small(right, f % 2)
-            self.fire_sprites[f"big_{d}_jump"] = create_fire_mario_big(right, 0)
-            self.fire_sprites[f"small_{d}_jump"] = create_fire_mario_small(right, 0)
+        # Sprites Fire Mario - NES si disponible, sinon codes
+        if self.loader.loaded:
+            self.fire_sprites = self.loader.get_fire_mario_sprites()
+        else:
+            self.fire_sprites = {}
+            for right in [True, False]:
+                d = "R" if right else "L"
+                for f, name in enumerate(["idle", "run1", "run2", "run3"]):
+                    self.fire_sprites[f"big_{d}_{name}"] = create_fire_mario_big(right, f % 2)
+                    self.fire_sprites[f"small_{d}_{name}"] = create_fire_mario_small(right, f % 2)
+                self.fire_sprites[f"big_{d}_jump"] = create_fire_mario_big(right, 0)
+                self.fire_sprites[f"small_{d}_jump"] = create_fire_mario_small(right, 0)
 
         # Images items
         if self.loader.loaded:
