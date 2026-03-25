@@ -236,6 +236,15 @@ g = Sol sous tuyau
 
 Les tuyaux et plantes piranha sont definis separement par coordonnees.
 
+## Equipe
+
+| Membre | Nom |
+|--------|-----|
+| AKO | Christian |
+| CERVERA | Noe |
+| SIMILIEN | Carld |
+| KESSAVANE | Dhanoush |
+
 ## Credits
 
 - Sprites NES et sons : issus du projet [super-mario-python](https://github.com/mx0c/super-mario-python) (inspire de Meth-Meth-Method)
